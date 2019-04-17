@@ -36,7 +36,6 @@ exports = module.exports = function IndeedService() {
 
     this.query = function(options) {
         return new Promise(function(resolve, reject) {
-
             // Validate parameter before continuing.
             if(options === null || options === undefined) {
                 reject(new Error('Inside IndeedService.query() -- `options` is ' +options+ '.'));
@@ -45,7 +44,6 @@ exports = module.exports = function IndeedService() {
 
             _this.options = options;
             _buildQueryString(options).then(function(queryString) {
-
                 // Are we using a new query from last time?
                 // Reset current job index and previous query.
                 // This helps with pagination and prevents users from seeing the same jobs.
@@ -55,7 +53,6 @@ exports = module.exports = function IndeedService() {
                 } else {
                     _this.jobIndex += 10;
                 }
-
                 switch(options.country) {
                     case "Argentina": return _util.getHTTPS('ar.indeed.com', '/jobs'+queryString); break;
                     case "Australia": return _util.getHTTPS('au.indeed.com', '/jobs'+queryString); break;
@@ -263,17 +260,15 @@ exports = module.exports = function IndeedService() {
 
     const _getFeaturedJobs = function($) {
         return new Promise(function(resolve, reject) {
-
+            
             if($ === undefined) {
                 let currentErr = 'Inside _getFeaturedJobs() - '
                 reject(new Error(currentErr + '`$` is undefined.'));
             } else {
 
                 let list = [];
-
                 $('div.row.result').each(function(i, element) {
                     let jobDetails = {};
-
                     // Get job title and href to ad details
                     // TODO: Could be a US job. Don't hard code `ca.indeed.com`
                     let aTag = $(element).find('a');
@@ -286,55 +281,62 @@ exports = module.exports = function IndeedService() {
                     ((sponsor.text() === 'Sponsored') ? isSponsored = true : isSponsored = false);
                     jobDetails.isSponsored = isSponsored;
 
-                    // Some ad details have different class names if they're sponsored.
-                    // Why? I have no idea ... but it was a pain in the ass figuring it out.
+                    // Some ad details have different class names if they're sponsored..
+                    //NOTE THAT AS OF 4/17/2019 INDEED CHANGED THE STRUCTURE OF THEIR WEBSITE,
+                    //AS A RESULT SPONSORED JOBS DO NOT WORK, NON-SPONSORED JOBS HAVE BEEN REPAIRED
+                    //TODO: Fix sponsored jobs
                     let company, location, salary, summary, datePosted;
                     if(isSponsored) {
-
                         let sponsoredDiv = $(element).find('div.sjcl');
-                        let tableData = $(element).find('table tr td span.summary');
 
                         // Company name
                         company = sponsoredDiv.find('span.company').text();
                         jobDetails.company = ((company.length > 1) ? company.trim() : 'Not specified');
 
                         // Job location
-                        location = sponsoredDiv.find('span.location').text();
+                        location = sponsoredDiv.find('div.location').text();
                         jobDetails.location = ((location.length > 1) ? location.trim() : 'Not specified');
 
                         // Job salary
-                        salary = $(sponsoredDiv).find('div').text();
+                        salary = $(element).find('.salary').text();
                         jobDetails.salary = ((salary.length > 1) ? salary.trim() : 'Not specified');
 
                         // Job summary
-                        summary = tableData.text();
+                        summary = $(element).find('div.summary').text();
                         jobDetails.summary = ((summary.length > 1) ? summary.trim() : 'Not specified');
-
+                        
+                        datePosted = $(element).find('span.date').text();
+                        jobDetails.datePosted = ((datePosted.length > 1) ? datePosted.trim() : 'Not specified')
                     } else {
-
                         // Company name
                         let company = $(element).find('span.company').text();
                         jobDetails.company = ((company.length > 1) ? company.trim() : 'Not specified');
 
                         // Job location
-                        location = $(element).find("span.location").text();
-                        jobDetails.location = ((location.length > 1) ? location.trim() : 'Not specified');
-
-                        let tableData = $(element).find('table tr td');
-
+                        locationSpan = $(element).find("span.location").text();
+                        locationDiv = $(element).find("div.location").text();
+                        if(locationSpan.length > 1){
+                            jobDetails.location = locationSpan.trim();
+                        }
+                        else if(locationDiv.length > 1){
+                            jobDetails.location = locationDiv.trim();
+                        }
+                        else{
+                            jobDetails.location = 'Not Specified'
+                        }
                         // Job salary
-                        salary = $(tableData).find('span.no-wrap').text();
+                        salary = $(element).find('.salary').text();
                         jobDetails.salary = ((salary.length > 1) ? salary.trim() : 'Not specified');
 
                         // Job summary
-                        summary = $(tableData).find('span.summary').text();
+                        summary = $(element).find('div.summary').text();
                         jobDetails.summary = ((summary.length > 1) ? summary.trim() : 'Not specified');
 
                         // Job post date
-                        datePosted = $(tableData).find('span.date').text();
+                        datePosted = $(element).find('span.date').text();
                         jobDetails.datePosted = ((datePosted.length > 1) ? datePosted.trim() : 'Not specified');
                     }
-
+                    console.log(jobDetails);
                     list.push(jobDetails);
                 });
 
