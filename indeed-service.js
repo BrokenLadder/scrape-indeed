@@ -282,9 +282,7 @@ exports = module.exports = function IndeedService() {
                     jobDetails.isSponsored = isSponsored;
 
                     // Some ad details have different class names if they're sponsored..
-                    //NOTE THAT AS OF 4/17/2019 INDEED CHANGED THE STRUCTURE OF THEIR WEBSITE,
-                    //AS A RESULT SPONSORED JOBS DO NOT WORK, NON-SPONSORED JOBS HAVE BEEN REPAIRED
-                    //TODO: Fix sponsored jobs
+                    //SPONSORED JOBS HAVE NOT BEEN FIXED
                     let company, location, salary, summary, datePosted;
                     if(isSponsored) {
                         let sponsoredDiv = $(element).find('div.sjcl');
@@ -315,6 +313,7 @@ exports = module.exports = function IndeedService() {
                         // Job location
                         locationSpan = $(element).find("span.location").text();
                         locationDiv = $(element).find("div.location").text();
+
                         if(locationSpan.length > 1){
                             jobDetails.location = locationSpan.trim();
                         }
@@ -336,7 +335,6 @@ exports = module.exports = function IndeedService() {
                         datePosted = $(element).find('span.date').text();
                         jobDetails.datePosted = ((datePosted.length > 1) ? datePosted.trim() : 'Not specified');
                     }
-                    console.log(jobDetails);
                     list.push(jobDetails);
                 });
 
